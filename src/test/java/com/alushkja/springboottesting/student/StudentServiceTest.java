@@ -2,6 +2,7 @@ package com.alushkja.springboottesting.student;
 
 import com.alushkja.springboottesting.student.dto.StudentDto;
 import com.alushkja.springboottesting.student.exception.BadStudentRequestException;
+import com.alushkja.springboottesting.student.exception.StudentNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ class StudentServiceTest {
     @Mock
     private StudentRepository studentRepository;
     private StudentService underTest;
+
 
     @BeforeEach
     void setUp() {
@@ -100,7 +102,24 @@ class StudentServiceTest {
     }
 
     @Test
-    @Disabled
-    void deleteById() {
+    void canDeleteById() {
+
+        underTest.addStudent(StudentDto.buildDefault());
+
+        underTest.deleteById(1L);
+
+        verify(studentRepository).existsById(1L);
+        verify(studentRepository).deleteById(1L);
+    }
+
+    @Test
+    void willThrowIfYouDeleteANonExistingUser(){
+        given(studentRepository.existsById(1L)).willReturn(false);
+
+        assertThatThrownBy(() -> underTest.deleteById(1L))
+                .isInstanceOf(StudentNotFoundException.class)
+                .hasMessageContaining("Student with id " + 1L + " not found");
+
+        verify(studentRepository, never()).deleteById(any());
     }
 }
